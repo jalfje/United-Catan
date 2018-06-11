@@ -1,0 +1,135 @@
+1. Initialize game
+  - Number of players
+  - Dice rolled for you vs input manually
+  - Victory points for a win
+  - Generate board (or manually create it as a stretch goal)
+2. Roll dice, determine turn order
+3. Place initial buildings
+4. Play game
+  - Turn starts
+  - Play knights
+  - Roll dice
+  - Generate resources, or lose cards/move robber/steal card
+  - Allow purchasing & placing, development card use, and trades (incl. 4/3/2-for-1)
+  - End turn
+  - Check for victory; if no victory, next turn.
+5. Victory achieved. Game over. Play again? Record scores?
+
+
+###################################################
+###---------------------------------------------###
+###---------------DATA-STRUCTURES---------------###
+###---------------------------------------------###
+###################################################
+
+
+
+Player:
+  - Unique identifier
+    - Associated to turn-order
+    - Associated to pieces on the board
+  - Name & colour for UI identification
+  - Current resource hand
+  - Current development card hand
+  - Last-calculated victory points
+
+Board:
+  - Hexes, Edges, Vertexes; each with a set of items on them
+  - Hexes
+    - Number for being rolled and a resource to generate; or neither
+    - Is the robber on this hex?
+  - Edges
+    - Road on the edge - does it exist, who owns it?
+  - Vertices
+    - Settlement or City & owner
+    - 2-for-1s & 3-for-1s available
+
+Resource (Enum)
+
+Building (Interface):
+  - Name for UI
+  - Owner (player ID)
+  - Resources required to build
+  - Number allowed per player (class constant)
+  - Where it's built on (Hex, Edge, Vertex) - possibly here, possibly in Board
+    - What it's mutually exclusive with
+
+Development Card (Interface):
+  - Name for UI
+  - Number in a standard deck
+  - Function that is executed when card is played
+
+
+
+###################################################
+###---------------------------------------------###
+###------------------FUNCTIONS------------------###
+###---------------------------------------------###
+###################################################
+
+
+
+Turn function:
+  - If player has a knight:
+    - Ask if they would like to use it; if yes, execute robber/knight function
+  - Roll dice, or input dice roll
+    - Generate resource or move robber
+  - Ask if they would like to purchase & place anything, use a development card,
+    trade with another player, or end turn
+    - Repeat until end turn is selected (or timeout)
+  - Check player victory points for victory condition
+    - If victory, declare victory; do whatever (option to reset)
+  - Move to next player's turn
+
+Dice rolling functions (one or the other per game):
+  - Enter rolled dice value (in case we want to use real dice). Verify value or ask again.
+  - Roll 2d6, return sum
+
+Generate resource function (no 7 rolled):
+  Input: CurPlayer; value rolled
+  - Determine which tiles generated their resources; if there is a robber, don't generate
+  - Determine which settlements/cities are neighbouring the hex and their owners
+  - Determine how many resources are given to each player; if a player has a
+    choice (via gold), the choice is made after the non-choice resources are
+    given out
+(Note: we assume infinite resource piles)
+
+Robber function (7 rolled or knight played):
+  Input: CurPlayer; should players lose cards?
+  - If 7 rolled (not knight played):
+    - Players with more than 7 cards choose which to discard
+  - Player who rolled it chooses where to place it (cannot be placed in the
+    previous square)
+  - Player chooses which opponent to steal from
+  - Player steals from opponent - i.e. is given a random card from their hand;
+    the opponent loses this card
+
+Purchasing & placing function:
+  Input: CurPlayer; Item to be purchased
+  - If player cannot build Item due to lack of resources or no Items are left
+    of that type e.g. they already have 4 cities (or lack of locations, as a
+    strech goal), reject.
+  - Once choice is validated, if it's a building, player chooses where to place it
+    - Placement is validated, reject if:
+      - Road:
+        - Road already exists
+        - No neighbouring Road of that Player
+      - Settlement:
+        - Settlement or City already exists
+        - No neighbouring Road of that Player
+      - City:
+        - City already exists
+        - No Settlement of that Player on the location
+  - Add the Item to the Board, or add the development card to the player's hand
+
+Play Development Card function:
+  Input: CurPlayer; Development card chosen
+  - Execute card's function (varying options depending on card)
+    - Knight execution function checks for Largest Army
+  - Remove card from hand
+
+Add Building function:
+  Input: CurPlayer; Building; location
+  - Asserts location is valid and that player can place building
+  - Board has Building added to it
+  - CurPlayer's victory points are updated (Longest Road is checked)
