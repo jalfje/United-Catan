@@ -18,14 +18,21 @@ class DirectionError(ValueError):
 
 
 class Direction(Enum):
-    W = auto()
-    NW = auto()
-    N = auto()
-    NE = auto()
-    E = auto()
-    SE = auto()
-    S = auto()
-    SW = auto()
+    W = 1
+    NW = 2
+    N = 3
+    NE = 4
+    E = 5
+    SE = 6
+    S = 7
+    SW = 8
+
+    def __str__(self):
+        return self.name
+    def __repr__(self):
+        return self.name
+    def __lt__(self, other):
+        return self.value < other.value
 
 
 # function for verifying that coords are integers that sum to 0
@@ -45,9 +52,40 @@ def verify_coords(q, r, s):
         raise ValueError("q + r + s must equal 0")
 
 
-class Vertex(object):
+# Base class for objects which are completely representable by a tuple.
+# Includes overrides for __eq__, __hash__, __str__, and __repr__.
+class Tupleable(object):
 
-    __allowed_directions = [Direction.W, Direction.E]
+    # raise error if the object cannot be iterated, i.e. converted to a tuple
+    def __iter__(self):
+        raise InterfaceError(self)
+
+    # objects are equal if their tuples are equal
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+        else:
+            return tuple(self) == tuple(other)
+
+    # hash a tuple of the object
+    def __hash__(self):
+        return hash(tuple(self))
+
+    # get the string representation of this object
+    def __str__(self):
+        return self.__class__.__name__ + str(tuple(self))
+
+    # get the string representation of this object
+    def __repr__(self):
+        return self.__class__.__name__ + str(tuple(self))
+
+    def __lt__(self, other):
+        return tuple(self) < tuple(other)
+
+
+class Vertex(Tupleable):
+
+    _allowed_directions = [Direction.W, Direction.E]
 
     # Initialize a Vertex object with a location and direction
     def __init__(self, direction, q, r, s=None):
@@ -70,28 +108,28 @@ class Vertex(object):
             q = q+1
             r = r
         # confirm that direction is valid
-        if direction not in Vertex.__allowed_directions:
-            raise DirectionError(Vertex.__allowed_directions)
+        if direction not in Vertex._allowed_directions:
+            raise DirectionError(Vertex._allowed_directions)
         # store variables
-        self.__d = direction
-        self.__q = q
-        self.__r = r
+        self._d = direction
+        self._q = q
+        self._r = r
 
     # direction
     def d(self):
-        return self.__d
+        return self._d
 
     # q-coordinate
     def q(self):
-        return self.__q
+        return self._q
 
     # r-coordinate
     def r(self):
-        return self.__r
+        return self._r
 
     # s-coordinate
     def s(self):
-        return -self.__q - self.__r
+        return -self._q - self._r
 
     # for creating tuples etc
     def __iter__(self):
@@ -102,7 +140,7 @@ class Vertex(object):
 
     # get hexes that this vertex is a corner of
     def touches(self):
-        assert(self.d() in Vertex.__allowed_directions)
+        assert(self.d() in Vertex._allowed_directions)
         if self.d() == Direction.W:
             return [Hex(self.q(), self.r()),
                     Hex(self.q()-1, self.r()+1),
@@ -112,9 +150,13 @@ class Vertex(object):
                     Hex(self.q()+1, self.r()-1),
                     Hex(self.q()+1, self.r())]
 
+
+    def is_touching(self, hex_):
+        return hex_ in self.touches()
+
     # get edges that this vertex is an endpoint of
     def protrudes(self):
-        assert(self.d() in Vertex.__allowed_directions)
+        assert(self.d() in Vertex._allowed_directions)
         if self.d() == Direction.W:
             return [Edge(Direction.SW, self.q(), self.r()),
                     Edge(Direction.S, self.q()-1, self.r()),
@@ -124,9 +166,13 @@ class Vertex(object):
                     Edge(Direction.N, self.q()+1, self.r()),
                     Edge(Direction.SE, self.q(), self.r())]
 
+
+    def is_protruding(self, edge):
+        return edge in self.protrudes()
+
     # get vertexes that are one edge away from this vertex
     def adjacents(self):
-        assert(self.d() in Vertex.__allowed_directions)
+        assert(self.d() in Vertex._allowed_directions)
         if self.d() == Direction.W:
             return [Vertex(Direction.SW, self.q(), self.r()),
                     Vertex(Direction.SW, self.q()-1, self.r()),
@@ -136,23 +182,14 @@ class Vertex(object):
                     Vertex(Direction.NE, self.q()+1, self.r()),
                     Vertex(Direction.SE, self.q(), self.r())]
 
-    # Overloaded operators #
 
-    # Vertex objects are equal if their coordinates and directions are equal
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return False
-        else:
-            return tuple(self) == tuple(other)
-
-    # hash a tuple of the object
-    def __hash__(self):
-        return hash(tuple(self))
+    def is_adjacent(self, vertex):
+        return vertex in self.adjacents()
 
 
-class Edge(object):
+class Edge(Tupleable):
 
-    __allowed_directions = [Direction.NW, Direction.N, Direction.NE]
+    _allowed_directions = [Direction.NW, Direction.N, Direction.NE]
 
     def __init__(self, direction, q, r, s=None):
         verify_coords(q, r, s)
@@ -170,28 +207,28 @@ class Edge(object):
             q = q+1
             r = r
 
-        if direction not in Edge.__allowed_directions:
-            raise DirectionError(Edge.__allowed_directions)
+        if direction not in Edge._allowed_directions:
+            raise DirectionError(Edge._allowed_directions)
 
-        self.__d = direction
-        self.__q = q
-        self.__r = r
+        self._d = direction
+        self._q = q
+        self._r = r
 
     # direction
     def d(self):
-        return self.__d
+        return self._d
 
     # q-coordinate
     def q(self):
-        return self.__q
+        return self._q
 
     # r-coordinate
     def r(self):
-        return self.__r
+        return self._r
 
     # s-coordinate
     def s(self):
-        return -self.__q - self.__r
+        return -self._q - self._r
 
     # for creating tuples etc
     def __iter__(self):
@@ -202,7 +239,7 @@ class Edge(object):
 
     # get hexes that this edge is a border of
     def joins(self):
-        assert(self.d() in Edge.__allowed_directions)
+        assert(self.d() in Edge._allowed_directions)
         if self.d() == Direction.NW:
             return [Hex(self.q(), self.r()),
                     Hex(self.q()-1, self.r())]
@@ -213,9 +250,13 @@ class Edge(object):
             return [Hex(self.q(), self.r()),
                     Hex(self.q()+1, self.r()-1)]
 
+
+    def is_joining(self, hex_):
+        return hex_ in self.joins()
+
     # get edges that continue from this edge
     def continues(self):
-        assert(self.d() in Edge.__allowed_directions)
+        assert(self.d() in Edge._allowed_directions)
         if self.d() == Direction.NW:
             return [Edge(Direction.SW, self.q(), self.r()),
                     Edge(Direction.S, self.q()-1, self.r()),
@@ -232,9 +273,13 @@ class Edge(object):
                     Edge(Direction.S, self.q()+1, self.r()-1),
                     Edge(Direction.SE, self.q(), self.r())]
 
+
+    def is_continuing(self, edge):
+        return edge in self.continues()
+
     # get vertexes that are endpoints of this edge
     def endpoints(self):
-        assert(self.d() in Edge.__allowed_directions)
+        assert(self.d() in Edge._allowed_directions)
         if self.d() == Direction.NW:
             return [Vertex(Direction.W, self.q(), self.r()),
                     Vertex(Direction.NW, self.q(), self.r())]
@@ -245,43 +290,34 @@ class Edge(object):
             return [Vertex(Direction.NE, self.q(), self.r()),
                     Vertex(Direction.E, self.q(), self.r())]
 
-    # Overloaded operators #
 
-    # Edge objects are equal if their coordinates and Directions are equal
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return False
-        else:
-            return tuple(self) == tuple(other)
-
-    # hash a tuple of the object
-    def __hash__(self):
-        return hash(tuple(self))
+    def is_endpoint(self, vertex):
+        return vertex in self.endpoints()
 
 
-class Hex(object):
+class Hex(Tupleable):
 
-    __corner_directions = [Direction.W, Direction.NW, Direction.NE,
+    _corner_directions = [Direction.W, Direction.NW, Direction.NE,
                            Direction.E, Direction.SE, Direction.SW]
-    __border_directions = [Direction.NW, Direction.N, Direction.NE,
+    _border_directions = [Direction.NW, Direction.N, Direction.NE,
                            Direction.SW, Direction.S, Direction.SE]
-    __neighbour_directions = __border_directions
+    _neighbour_directions = _border_directions
 
     def __init__(self, q, r, s=None):
         # validate that coordinates sum to 0
         verify_coords(q, r, s)
-        self.__q = q
-        self.__r = r
+        self._q = q
+        self._r = r
 
     # accessors
     def q(self):
-        return self.__q
+        return self._q
 
     def r(self):
-        return self.__r
+        return self._r
 
     def s(self):
-        return -self.__q - self.__r
+        return -self._q - self._r
 
     # for creating tuples etc
     def __iter__(self):
@@ -291,11 +327,11 @@ class Hex(object):
 
     # set of neighbour hexes, in clockwise order: NW, N, NE, SE, S, SW
     def neighbours(self):
-        return [self.neighbour(d) for d in Hex.__neighbour_directions]
+        return [self.neighbour(d) for d in Hex._neighbour_directions]
 
     # check if a hex is a neighbour hex of this hex
-    def is_neighbour(self, other):
-        return other in self.neighbours()
+    def is_neighbour(self, hex_):
+        return hex_ in self.neighbours()
 
     # get neighbour hex by direction relative to this hex
     def neighbour(self, direction):
@@ -311,11 +347,11 @@ class Hex(object):
             return Hex(self.q(),     self.r() + 1)
         if direction == Direction.SW:
             return Hex(self.q() - 1, self.r())
-        raise DirectionError(Hex.__neighbour_directions)
+        raise DirectionError(Hex._neighbour_directions)
 
     # set of border edges, in clockwise order: NW, N, NE, SE, S, SW
     def borders(self):
-        return [self.border(d) for d in Hex.__border_directions]
+        return [self.border(d) for d in Hex._border_directions]
 
     # check if an edge is a border edge of this hex
     def is_border(self, edge):
@@ -323,13 +359,13 @@ class Hex(object):
 
     # get border edge by direction relative to this hex
     def border(self, direction):
-        if direction in Hex.__border_directions:
+        if direction in Hex._border_directions:
             return Edge(direction, self.q(), self.r())
-        raise DirectionError(Hex.__border_directions)
+        raise DirectionError(Hex._border_directions)
 
     # set of corner vertices, in clockwise order: W, NW, NE, E, SE, SW
     def corners(self):
-        return [self.corner(d) for d in Hex.__corner_directions]
+        return [self.corner(d) for d in Hex._corner_directions]
 
     # check if a vertex is a corner vertex of this hex
     def is_corner(self, vertex):
@@ -337,22 +373,16 @@ class Hex(object):
 
     # get corner vertex by direction relative to this hex
     def corner(self, direction):
-        if direction in Hex.__corner_directions:
+        if direction in Hex._corner_directions:
             return Vertex(direction, self.q(), self.r())
-        raise DirectionError(Hex.__corner_directions)
+        raise DirectionError(Hex._corner_directions)
+
+    # get distance between this and another hex coordinate
+    def dist(self, other):
+        # largest absolute value in the difference is the distance.
+        return max([abs(c) for c in tuple(self - other)])
 
     # Overloaded operators #
-
-    # Hex objects are equal if their coordinates are equal
-    def __eq__(self, other):
-        if not isinstance(other, self.__class__):
-            return False
-        else:
-            return tuple(self) == tuple(other)
-
-    # hash a tuple of the object
-    def __hash__(self):
-        return hash(tuple(self))
 
     # get positive copy of this hex coordinate
     def __pos__(self):
