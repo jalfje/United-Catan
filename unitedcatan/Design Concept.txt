@@ -31,7 +31,7 @@ Player:
   - Name & colour for UI identification
   - Current resource hand
   - Current development card hand
-  - Last-calculated victory points
+  - List of pieces on board
 
 Board:
   - Hexes, Edges, Vertexes; each with a set of items on them
@@ -47,15 +47,16 @@ Board:
 Resource (Enum)
 
 Building (Interface):
-  - Name for UI
+  - Name, for UI
   - Owner (player ID)
-  - Resources required to build
+  - Resources required to buy
   - Number allowed per player (class constant)
-  - Where it's built on (Hex, Edge, Vertex) - possibly here, possibly in Board
-    - What it's mutually exclusive with
+  - Where it's built on (Hex, Edge, Vertex)
+    - What it's compatible with, if any - otherwise two things can't be on
+      the same location
 
 Development Card (Interface):
-  - Name for UI
+  - Name, for UI
   - Number in a standard deck
   - Function that is executed when card is played
 

@@ -10,31 +10,31 @@ class Player(object):
         self.colour = colour
         self._resources = defaultdict(int)
         self._development_cards = []
-        self.victory_points = 0
+        self.victoryPoints = 0
 
-    def get_resources(self):
+    def getResources(self):
         return self._resources
 
-    def give_resources(self, resources):
+    def giveResources(self, resources):
         for resource, quantity in resources.items():
             self._resources[resource] += quantity
 
-    def take_resources(self, resources):
-        if not self.has_resources(resources):
+    def takeResources(self, resources):
+        if not self.hasResources(resources):
             raise Exception("Cannot take resources")  # TODO: better exception
         for resource, quantity in resources.items():
             self._resources[resource] -= quantity
 
-    def has_resources(self, resources):
+    def hasResources(self, resources):
         for resource, quantity in resources.items():
             if self._resources[resource] < quantity:
                 return False
         return True
 
-    def random_resource(self):
-        if self.num_resources() == 0:
+    def randomResource(self):
+        if self.numResources() == 0:
             return {}
-        num = random.randrange(0, self.num_resources())
+        num = random.randrange(0, self.numResources())
         cur = 0
         for resource, quantity in self._resources.items():
             if quantity == 0:
@@ -43,11 +43,11 @@ class Player(object):
             if num < cur:
                 return {resource: 1}
 
-    def take_random_resource(self):
-        res = self.random_resource()
-        self.take_resources(res)
+    def takeRandomResource(self):
+        res = self.randomResource()
+        self.takeResources(res)
         return res
 
-    def num_resources(self):
+    def numResources(self):
         return sum(self._resources.values())
 

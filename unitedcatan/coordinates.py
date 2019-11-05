@@ -1,5 +1,6 @@
 from enum import Enum
 from enum import auto
+from catanerrors import InterfaceError
 
 # assuming flat-topped hexagons
 # https://www.redblobgames.com/grids/hexagons/#coordinates

@@ -2,8 +2,8 @@ from enum import Enum, auto
 
 
 class Resource(Enum):
-    SHEEP = auto()
-    WHEAT = auto()
-    LOG = auto()
     ROCK = auto()
+    WHEAT = auto()
+    SHEEP = auto()
+    LOG = auto()
     BRICK = auto()
